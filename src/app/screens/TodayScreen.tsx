@@ -60,8 +60,14 @@ const TaskItem = ({ task, onToggle, onPhoto }: TaskItemProps) => {
 };
 
 export const TodayScreen = () => {
-    const { todayTasks, toggleTask, completeTaskWithValue, currentDayId } = useChallengeStore();
+    const { todayTasks, toggleTask, completeTaskWithValue, currentDayId, restartChallenge } = useChallengeStore();
     const confettiRef = useRef<ConfettiCannon>(null);
+    // Need to know day status. Store updates todayTasks, but maybe we need day status too.
+    // Let's derive it or fetch it. 
+    // Optimization: Store actually has `daysPath`, we can find it there.
+    const { daysPath } = useChallengeStore();
+    const currentDay = daysPath.find(d => d.id === currentDayId);
+    const isFailed = currentDay?.status === 'failed';
 
     const isAllComplete = todayTasks.length > 0 && todayTasks.every(t => !!t.completed);
 
@@ -72,14 +78,15 @@ export const TodayScreen = () => {
     }, [isAllComplete]);
 
     const handlePhoto = async (taskId: number) => {
+        // ... (existing photo logic)
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert("Permission needed", "Camera access is required for progress pics!");
-            return;
+             Alert.alert("Permission needed", "Camera access is required for progress pics!");
+             return;
         }
 
         const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'], 
             allowsEditing: true,
             aspect: [3, 4],
             quality: 0.5,
@@ -89,6 +96,28 @@ export const TodayScreen = () => {
             await completeTaskWithValue(taskId, result.assets[0].uri);
         }
     };
+
+    if (isFailed) {
+        return (
+             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+                <Text style={[styles.dayTitle, { color: '#ff4444' }]}>YOU FAILED</Text>
+                <Text style={{ color: '#fff', textAlign: 'center', marginVertical: 20, fontSize: 18 }}>
+                    You missed Day {currentDayId}. Strict rules mean you must start over.
+                </Text>
+                <TouchableOpacity 
+                    style={{ backgroundColor: '#ff4444', padding: 20, borderRadius: 30 }}
+                    onPress={() => {
+                        Alert.alert("Restart Challenge?", "This will wipe current progress and start Day 1.", [
+                            { text: "Cancel", style: "cancel" },
+                            { text: "Restart", style: "destructive", onPress: restartChallenge }
+                        ])
+                    }}
+                >
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>RESTART CHALLENGE</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>

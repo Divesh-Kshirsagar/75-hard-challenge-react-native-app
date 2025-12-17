@@ -12,6 +12,7 @@ interface ChallengeState {
   
   initApp: () => Promise<void>;
   startChallenge: (startDate: string) => Promise<void>;
+  restartChallenge: () => Promise<void>;
   toggleTask: (taskId: number, currentStatus: boolean) => Promise<void>;
   completeTaskWithValue: (taskId: number, value: string) => Promise<void>;
   refreshToday: () => Promise<void>;
@@ -35,11 +36,47 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
     });
     
     if (activeDay) {
-        set({ currentDayId: activeDay.id });
-        await get().refreshToday();
+        // Strict Mode Check
+        const todayStr = new Date().toISOString().split('T')[0];
+        const activeDateStr = activeDay.date; // stored as YYYY-MM-DD
+        
+        // If active day is in the past (and not completed), it's a fail.
+        // Wait, if I open app TODAY, and active day is TODAY, I'm good.
+        // If active day is YESTERDAY, I missed it?
+        // Actually, if active day is yesterday and status is still 'active', it means I didn't finish it yesterday.
+        // So if activeDate < todayStr, FAIL.
+        
+        if (activeDateStr < todayStr) {
+             // FAIL LOGIC
+             // Mark current day as failed
+             await db.update(days).set({ status: 'failed' }).where(eq(days.id, activeDay.id));
+             
+             // In 75 Hard, if you fail, you restart.
+             // We'll update state to show failure.
+             set({ currentDayId: activeDay.id }); // Show the failed day?
+             // Or maybe we need a global 'hasFailed' flag?
+             // For now, let's just let the UI reflect 'failed' status on the current day if we want.
+             // But the user needs to know they failed.
+             
+             const failedDay = { ...activeDay, status: 'failed' };
+             // We probably want to keep it as currentDayId so the UI shows "FAILED".
+        } else {
+             set({ currentDayId: activeDay.id });
+        }
+    } else {
+        // If no active day, maybe completed or failed?
+        // Find last modified?
+        // For now, default logic is fine.
     }
+    
+    await get().refreshToday();
     await get().refreshPath();
     set({ isInitialized: true });
+  },
+
+  restartChallenge: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      await get().startChallenge(today);
   },
 
   startChallenge: async (startDate: string) => {
