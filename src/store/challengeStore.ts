@@ -7,12 +7,16 @@ interface ChallengeState {
   isInitialized: boolean;
   currentDayId: number | null;
   todayTasks: any[];
-  daysPath: any[]; // { id, status, date }
+  daysPath: any[]; 
+  galleryImages: any[]; // { id, uri, dayId }
+  
   initApp: () => Promise<void>;
   startChallenge: (startDate: string) => Promise<void>;
   toggleTask: (taskId: number, currentStatus: boolean) => Promise<void>;
+  completeTaskWithValue: (taskId: number, value: string) => Promise<void>;
   refreshToday: () => Promise<void>;
   refreshPath: () => Promise<void>;
+  refreshGallery: () => Promise<void>;
   getJournal: () => Promise<string | null>;
   saveJournal: (note: string) => Promise<void>;
 }
@@ -22,6 +26,7 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
   currentDayId: null,
   todayTasks: [],
   daysPath: [],
+  galleryImages: [],
 
   initApp: async () => {
     await initDB();
@@ -110,7 +115,6 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       await get().refreshToday();
 
       // 3. Check for Day Completion
-      // Fetch all tasks again (from state or DB)
       const freshTasks = await db.query.tasks.findMany({
           where: eq(tasks.dayId, currentDayId)
       });
@@ -121,7 +125,7 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       // 4. Update Day Status
       await db.update(days).set({ status: dayStatus }).where(eq(days.id, currentDayId));
       
-      // 5. Refresh Path (so visual star/check updates)
+      // 5. Refresh Path
       await get().refreshPath();
   },
 
@@ -136,5 +140,44 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       const { currentDayId } = get();
       if (!currentDayId) return;
       await db.update(days).set({ notes: note }).where(eq(days.id, currentDayId));
+  },
+
+  refreshGallery: async () => {
+      const photoTasks = await db.query.tasks.findMany({
+          where: (tasks, { eq, and }) => and(
+              eq(tasks.type, 'pic'),
+              eq(tasks.completed, true)
+          )
+      });
+      
+      const images = photoTasks.map(t => ({
+          id: t.id,
+          uri: t.value || '',
+          dayId: t.dayId
+      })).filter(img => img.uri.startsWith('file://'));
+      
+      set({ galleryImages: images });
+  },
+
+  completeTaskWithValue: async (taskId, value) => {
+      const { currentDayId } = get();
+      if (!currentDayId) return;
+
+      // 1. Update Task with Value and Mark Complete
+      await db.update(tasks).set({ 
+          completed: true,
+          value: value 
+      }).where(eq(tasks.id, taskId));
+      
+      // 2. Refresh Local State
+      await get().refreshToday();
+
+      // Check for Day Completion
+      const freshTasks = await db.query.tasks.findMany({ where: eq(tasks.dayId, currentDayId) });
+      const allComplete = freshTasks.every(t => t.completed);
+      const dayStatus = allComplete ? 'completed' : 'active';
+      await db.update(days).set({ status: dayStatus }).where(eq(days.id, currentDayId));
+      await get().refreshPath();
+      await get().refreshGallery();
   }
 }));

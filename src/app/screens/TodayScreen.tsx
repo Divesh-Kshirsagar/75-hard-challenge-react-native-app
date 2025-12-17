@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { CheckCircle, Circle, Dumbbell, Droplets, Book, Camera, Ban, Utensils } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import ConfettiCannon from 'react-native-confetti-cannon';
+import * as ImagePicker from 'expo-image-picker';
 
 // Icon mapping
 const getIcon = (type: string, color: string) => {
@@ -20,23 +21,36 @@ const getIcon = (type: string, color: string) => {
 };
 
 interface TaskItemProps {
-    task: any; // Ideally import Task type from schema, but using any for MVP velocity if schema type not exported
+    task: any; 
     onToggle: (id: number, status: boolean) => void;
+    onPhoto: (id: number) => void;
 }
 
-const TaskItem = ({ task, onToggle }: TaskItemProps) => {
-    // Force boolean cast to avoid "String cannot be cast to Boolean" crash on Android
-    // if Drizzle/SQLite returns 0/1 integer or string.
+const TaskItem = ({ task, onToggle, onPhoto }: TaskItemProps) => {
     const completed = !!task.completed;
+    const isPhotoTask = task.type === 'pic';
+    const hasPhoto = isPhotoTask && completed && task.value.startsWith('file://'); // Simple check
+
+    const handlePress = () => {
+        if (isPhotoTask) {
+            onPhoto(task.id);
+        } else {
+            onToggle(task.id, completed);
+        }
+    };
 
     return (
-        <TouchableOpacity style={[styles.taskCard, completed && styles.taskCardCompleted]} onPress={() => onToggle(task.id, completed)}>
+        <TouchableOpacity style={[styles.taskCard, completed && styles.taskCardCompleted]} onPress={handlePress}>
             <View style={styles.iconContainer}>
                 {getIcon(task.type, completed ? '#fff' : '#ff4444')}
             </View>
             <View style={{ flex: 1 }}>
-                <Text style={[styles.taskTitle, completed && styles.taskTextCompleted]}>{task.value}</Text>
+                <Text style={[styles.taskTitle, completed && styles.taskTextCompleted]}>
+                     {/* Show "Photo Taken" if it's a URI, otherwise the value */}
+                     {isPhotoTask && completed ? "Photo Taken" : task.value}
+                </Text>
                 <Text style={styles.taskSub}>{task.type.replace('_', ' ').toUpperCase()}</Text>
+                {hasPhoto && <Image source={{ uri: task.value }} style={styles.thumb} />}
             </View>
             <View>
                 {completed ? <CheckCircle color="#fff" size={28} /> : <Circle color="#333" size={28} />}
@@ -46,7 +60,7 @@ const TaskItem = ({ task, onToggle }: TaskItemProps) => {
 };
 
 export const TodayScreen = () => {
-    const { todayTasks, toggleTask, currentDayId } = useChallengeStore();
+    const { todayTasks, toggleTask, completeTaskWithValue, currentDayId } = useChallengeStore();
     const confettiRef = useRef<ConfettiCannon>(null);
 
     const isAllComplete = todayTasks.length > 0 && todayTasks.every(t => !!t.completed);
@@ -56,6 +70,25 @@ export const TodayScreen = () => {
             confettiRef.current?.start();
         }
     }, [isAllComplete]);
+
+    const handlePhoto = async (taskId: number) => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert("Permission needed", "Camera access is required for progress pics!");
+            return;
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [3, 4],
+            quality: 0.5,
+        });
+
+        if (!result.canceled && result.assets[0].uri) {
+            await completeTaskWithValue(taskId, result.assets[0].uri);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -67,7 +100,13 @@ export const TodayScreen = () => {
             <FlatList
                 data={todayTasks}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <TaskItem task={item} onToggle={toggleTask} />}
+                renderItem={({ item }) => (
+                    <TaskItem 
+                        task={item} 
+                        onToggle={toggleTask} 
+                        onPhoto={handlePhoto} 
+                    />
+                )}
                 contentContainerStyle={{ padding: 20 }}
             />
             
@@ -94,5 +133,6 @@ const styles = StyleSheet.create({
     iconContainer: { marginRight: 15 },
     taskTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
     taskTextCompleted: { textDecorationLine: 'line-through' },
-    taskSub: { color: '#666', fontSize: 10, marginTop: 4 }
+    taskSub: { color: '#666', fontSize: 10, marginTop: 4 },
+    thumb: { width: 40, height: 40, borderRadius: 8, marginTop: 5 }
 });
