@@ -28,6 +28,21 @@ export const initDB = async () => {
         value TEXT,
         FOREIGN KEY(day_id) REFERENCES days(id)
       );
+      CREATE TABLE IF NOT EXISTS custom_todos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        day_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        completed BOOLEAN DEFAULT 0,
+        FOREIGN KEY(day_id) REFERENCES days(id)
+      );
+      CREATE TABLE IF NOT EXISTS todo_subtasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        todo_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        completed BOOLEAN DEFAULT 0,
+        FOREIGN KEY(todo_id) REFERENCES custom_todos(id) ON DELETE CASCADE
+      );
     `);
     
     // Check if we need to seed the 75 days? 

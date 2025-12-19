@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
+import { CustomTodoSection } from '../components/CustomTodoSection';
 import { CheckCircle, Circle, Dumbbell, Droplets, Book, Camera, Ban, Utensils } from 'lucide-react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import * as ImagePicker from 'expo-image-picker';
@@ -65,7 +66,7 @@ const TaskItem = ({ task, onToggle, onPhoto }: TaskItemProps) => {
 };
 
 export const TodayScreen = () => {
-    const { todayTasks, toggleTask, completeTaskWithValue, currentDayId, restartChallenge } = useChallengeStore();
+    const { todayTasks, customTodos, toggleTask, completeTaskWithValue, currentDayId, restartChallenge } = useChallengeStore();
     const confettiRef = useRef<ConfettiCannon>(null);
     // Need to know day status. Store updates todayTasks, but maybe we need day status too.
     // Let's derive it or fetch it. 
@@ -133,7 +134,11 @@ export const TodayScreen = () => {
     }
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView 
+            style={styles.container} 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} 
+        >
             <View style={styles.header}>
                 <Text style={styles.dayTitle}>DAY {currentDayId}</Text>
                 <Text style={styles.date}>{new Date().toDateString()}</Text>
@@ -143,9 +148,11 @@ export const TodayScreen = () => {
                 data={todayTasks}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderTaskItem}
-                contentContainerStyle={{ padding: 20 }}
+                contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+                ListFooterComponent={() => <CustomTodoSection customTodos={customTodos} />}
+                keyboardShouldPersistTaps="handled"
+                removeClippedSubviews={false}
             />
-            
             
             {isAllComplete && (
                 <ConfettiCannon 
@@ -156,7 +163,7 @@ export const TodayScreen = () => {
                     fadeOut={true}
                 />
             )}
-        </View>
+        </KeyboardAvoidingView>
     );
 };
 

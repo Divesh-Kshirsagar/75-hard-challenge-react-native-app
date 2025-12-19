@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, initDB } from '../db/client';
-import { days, tasks } from '../db/schema';
+import { days, tasks, customTodos as customTodosTable, todoSubtasks as todoSubtasksTable } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 interface ChallengeState {
@@ -21,6 +21,16 @@ interface ChallengeState {
   restartChallenge: () => Promise<void>;
   toggleTask: (taskId: number, currentStatus: boolean) => Promise<void>;
   completeTaskWithValue: (taskId: number, value: string) => Promise<void>;
+  customTodos: any[]; // { ...todo, subtasks: [] }
+  
+  // Custom Todo Actions
+  addCustomTodo: (title: string, description: string) => Promise<void>;
+  deleteCustomTodo: (id: number) => Promise<void>;
+  toggleCustomTodo: (id: number) => Promise<void>;
+  addSubTask: (todoId: number, content: string) => Promise<void>;
+  toggleSubTask: (subtaskId: number) => Promise<void>;
+  deleteSubTask: (subtaskId: number) => Promise<void>;
+
   refreshToday: () => Promise<void>;
   refreshPath: () => Promise<void>;
   refreshGallery: () => Promise<void>;
@@ -34,6 +44,7 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
   todayTasks: [],
   daysPath: [],
   galleryImages: [],
+  customTodos: [],
 
   hasSeenWelcome: false,
   userProfile: { name: 'User', color: 'ff0000', avatarUri: 'https://ui-avatars.com/api/?name=User&background=ff0000' },
@@ -141,10 +152,80 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
      const { currentDayId } = get();
      if (!currentDayId) return;
      
+     // 1. Fetch Standard Tasks
      const dayTasks = await db.query.tasks.findMany({
          where: eq(tasks.dayId, currentDayId)
      });
-     set({ todayTasks: dayTasks });
+     
+     // 2. Fetch Custom Todos with Subtasks
+     // Drizzle query relations if configured, or manual join. 
+     // For simplicity/speed in this setup without relations defined in schema:
+     const cTodos = await db.query.customTodos.findMany({
+         where: eq(customTodosTable.dayId, currentDayId)
+     });
+
+     const todosWithSubs = await Promise.all(cTodos.map(async (todo) => {
+         const subs = await db.query.todoSubtasks.findMany({
+             where: eq(todoSubtasksTable.todoId, todo.id)
+         });
+         return { ...todo, subtasks: subs };
+     }));
+
+     set({ todayTasks: dayTasks, customTodos: todosWithSubs });
+  },
+
+  addCustomTodo: async (title, description) => {
+      const { currentDayId } = get();
+      if (!currentDayId) return;
+      await db.insert(customTodosTable).values({
+          dayId: currentDayId,
+          title,
+          description,
+          completed: false
+      });
+      await get().refreshToday();
+  },
+
+  deleteCustomTodo: async (id) => {
+      await db.delete(customTodosTable).where(eq(customTodosTable.id, id));
+      await get().refreshToday();
+  },
+
+  toggleCustomTodo: async (id) => {
+      const { customTodos } = get();
+      const todo = customTodos.find(t => t.id === id);
+      if (!todo) return;
+      
+      await db.update(customTodosTable)
+        .set({ completed: !todo.completed })
+        .where(eq(customTodosTable.id, id));
+      
+      await get().refreshToday();
+  },
+
+  addSubTask: async (todoId, content) => {
+      await db.insert(todoSubtasksTable).values({
+          todoId,
+          content,
+          completed: false
+      });
+      await get().refreshToday();
+  },
+
+  toggleSubTask: async (subtaskId) => {
+      // Find current status first (optimized approach preferable but fetch is safe)
+      const sub = await db.query.todoSubtasks.findFirst({ where: eq(todoSubtasksTable.id, subtaskId) });
+      if (sub) {
+        await db.update(todoSubtasksTable)
+            .set({ completed: !sub.completed })
+            .where(eq(todoSubtasksTable.id, subtaskId));
+        await get().refreshToday();
+      }
+  },
+
+  deleteSubTask: async (subtaskId) => {
+      await db.delete(todoSubtasksTable).where(eq(todoSubtasksTable.id, subtaskId));
+      await get().refreshToday();
   },
 
   refreshPath: async () => {
