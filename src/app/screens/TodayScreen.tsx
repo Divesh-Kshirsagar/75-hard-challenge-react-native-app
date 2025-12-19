@@ -5,6 +5,10 @@ import { CheckCircle, Circle, Dumbbell, Droplets, Book, Camera, Ban, Utensils } 
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import * as ImagePicker from 'expo-image-picker';
+import { InferSelectModel } from 'drizzle-orm';
+import { tasks } from '../../db/schema';
+
+type Task = InferSelectModel<typeof tasks>;
 
 // Icon mapping
 const getIcon = (type: string, color: string) => {
@@ -21,15 +25,17 @@ const getIcon = (type: string, color: string) => {
 };
 
 interface TaskItemProps {
-    task: any; 
+    task: Task; 
     onToggle: (id: number, status: boolean) => void;
     onPhoto: (id: number) => void;
 }
 
 const TaskItem = ({ task, onToggle, onPhoto }: TaskItemProps) => {
+    // SQLite stores booleans as 0/1, Drizzle might map it if mode is boolean
     const completed = !!task.completed;
     const isPhotoTask = task.type === 'pic';
-    const hasPhoto = isPhotoTask && completed && task.value.startsWith('file://'); // Simple check
+    // @ts-ignore
+    const hasPhoto = isPhotoTask && completed && task.value && task.value.startsWith('file://');
 
     const handlePress = () => {
         if (isPhotoTask) {
@@ -50,7 +56,7 @@ const TaskItem = ({ task, onToggle, onPhoto }: TaskItemProps) => {
                      {isPhotoTask && completed ? "Photo Taken" : task.value}
                 </Text>
                 <Text style={styles.taskSub}>{task.type.replace('_', ' ').toUpperCase()}</Text>
-                {hasPhoto && <Image source={{ uri: task.value }} style={styles.thumb} />}
+                {hasPhoto && <Image source={{ uri: task.value as string }} style={styles.thumb} />}
             </View>
             <View>
                 {completed ? <CheckCircle color="#fff" size={28} /> : <Circle color="#333" size={28} />}
@@ -97,6 +103,14 @@ export const TodayScreen = () => {
         }
     };
 
+    const renderTaskItem = React.useCallback(({ item }: { item: Task }) => (
+        <TaskItem 
+            task={item} 
+            onToggle={toggleTask} 
+            onPhoto={handlePhoto} 
+        />
+    ), [toggleTask]);
+
     if (isFailed) {
         return (
              <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
@@ -129,15 +143,10 @@ export const TodayScreen = () => {
             <FlatList
                 data={todayTasks}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                    <TaskItem 
-                        task={item} 
-                        onToggle={toggleTask} 
-                        onPhoto={handlePhoto} 
-                    />
-                )}
+                renderItem={renderTaskItem}
                 contentContainerStyle={{ padding: 20 }}
             />
+            
             
             {isAllComplete && (
                 <ConfettiCannon 

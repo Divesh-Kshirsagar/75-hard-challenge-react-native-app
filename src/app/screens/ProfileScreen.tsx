@@ -1,12 +1,14 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, Dimensions, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, FlatList, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
+import { AvatarSelector } from '../components/AvatarSelector';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = width / 3;
 
 export const ProfileScreen = () => {
-    const { galleryImages, refreshGallery, daysPath } = useChallengeStore();
+    const { galleryImages, refreshGallery, daysPath, userProfile, setUserProfile } = useChallengeStore();
+    const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
         refreshGallery();
@@ -18,7 +20,7 @@ export const ProfileScreen = () => {
     // Calculate Current Streak (naive: count backwards from today until not completed)
     // For MVP, just Total Completed is a good stat.
 
-    const renderImage = ({ item }) => (
+    const renderImage = ({ item }: any) => ( // Fix type implicit any
         <View style={styles.imageContainer}>
              <Image source={{ uri: item.uri }} style={styles.image} />
              <View style={styles.badge}>
@@ -30,12 +32,15 @@ export const ProfileScreen = () => {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
-                <Image 
-                    source={{ uri: 'https://ui-avatars.com/api/?name=User&background=random' }} 
-                    style={styles.avatar} 
-                />
-                <Text style={styles.name}>CHALLENGER</Text>
+                <TouchableOpacity onPress={() => setIsEditing(true)}>
+                    <Image source={{ uri: userProfile.avatarUri }} style={styles.avatar} />
+                </TouchableOpacity>
+                <Text style={styles.name}>{userProfile.name.toUpperCase()}</Text>
                 <Text style={styles.subtext}>75 Hard Journey</Text>
+                
+                <TouchableOpacity style={styles.editBadge} onPress={() => setIsEditing(true)}>
+                    <Text style={styles.editText}>EDIT</Text>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.statsRow}>
@@ -69,8 +74,15 @@ export const ProfileScreen = () => {
                     ))
                 )}
             </View>
-            {/* Using Map instead of FlatList inside ScrollView to avoid nesting errors */}
              <View style={{ height: 100 }} /> 
+
+             <AvatarSelector 
+                visible={isEditing}
+                onClose={() => setIsEditing(false)}
+                onSave={setUserProfile}
+                currentName={userProfile.name}
+                currentColor={userProfile.color}
+             />
         </ScrollView>
     );
 };
@@ -93,5 +105,7 @@ const styles = StyleSheet.create({
     image: { width: '100%', height: '100%' },
     badge: { position: 'absolute', bottom: 5, right: 5, backgroundColor: 'rgba(0,0,0,0.7)', padding: 4, borderRadius: 4 },
     badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-    emptyText: { color: '#666', marginLeft: 20, fontStyle: 'italic' }
+    emptyText: { color: '#666', marginLeft: 20, fontStyle: 'italic' },
+    editBadge: { marginTop: 15, paddingHorizontal: 15, paddingVertical: 8, backgroundColor: '#333', borderRadius: 20 },
+    editText: { color: '#fff', fontSize: 10, fontWeight: 'bold' }
 });;

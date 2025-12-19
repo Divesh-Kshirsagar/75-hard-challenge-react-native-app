@@ -3,7 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useChallengeStore } from './src/store/challengeStore';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { OnboardingScreen } from './src/app/screens/OnboardingScreen';
+import { WelcomeScreen } from './src/app/screens/WelcomeScreen';
 import { MainNavigator } from './src/app/MainNavigator';
 import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
@@ -13,11 +15,15 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
+const Stack = createNativeStackNavigator();
+
 export default function App() {
-  const { initApp, isInitialized, currentDayId } = useChallengeStore();
+  const { initApp, isInitialized, currentDayId, hasSeenWelcome } = useChallengeStore();
 
   useEffect(() => {
     initApp();
@@ -78,7 +84,17 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style="light" />
       <NavigationContainer>
-        {currentDayId ? <MainNavigator /> : <OnboardingScreen />}
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {!hasSeenWelcome && (
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+          )}
+          {!currentDayId && (
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          )}
+          {currentDayId && (
+            <Stack.Screen name="Main" component={MainNavigator} />
+          )}
+        </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
   );

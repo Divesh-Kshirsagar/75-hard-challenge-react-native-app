@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, initDB } from '../db/client';
 import { days, tasks } from '../db/schema';
 import { eq } from 'drizzle-orm';
@@ -9,6 +10,11 @@ interface ChallengeState {
   todayTasks: any[];
   daysPath: any[]; 
   galleryImages: any[]; // { id, uri, dayId }
+  hasSeenWelcome: boolean;
+  userProfile: { name: string; color: string; avatarUri: string };
+  setUserProfile: (name: string, color: string) => Promise<void>;
+  setHasSeenWelcome: () => Promise<void>;
+  checkWelcomeStatus: () => Promise<void>;
   
   initApp: () => Promise<void>;
   startChallenge: (startDate: string) => Promise<void>;
@@ -29,7 +35,34 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
   daysPath: [],
   galleryImages: [],
 
+  hasSeenWelcome: false,
+  userProfile: { name: 'User', color: 'ff0000', avatarUri: 'https://ui-avatars.com/api/?name=User&background=ff0000' },
+
+  setUserProfile: async (name, color) => {
+      const uri = `https://ui-avatars.com/api/?name=${name}&background=${color}`;
+      const profile = { name, color, avatarUri: uri };
+      await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
+      set({ userProfile: profile });
+  },
+
+  setHasSeenWelcome: async () => {
+    await AsyncStorage.setItem('hasSeenWelcome', 'true');
+    set({ hasSeenWelcome: true });
+  },
+
+  checkWelcomeStatus: async () => {
+    const value = await AsyncStorage.getItem('hasSeenWelcome');
+    if (value === 'true') {
+        set({ hasSeenWelcome: true });
+    }
+    const profile = await AsyncStorage.getItem('userProfile');
+    if (profile) {
+        set({ userProfile: JSON.parse(profile) });
+    }
+  },
+
   initApp: async () => {
+    await get().checkWelcomeStatus();
     await initDB();
     const activeDay = await db.query.days.findFirst({
         where: eq(days.status, 'active')
@@ -40,33 +73,13 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
         const todayStr = new Date().toISOString().split('T')[0];
         const activeDateStr = activeDay.date; // stored as YYYY-MM-DD
         
-        // If active day is in the past (and not completed), it's a fail.
-        // Wait, if I open app TODAY, and active day is TODAY, I'm good.
-        // If active day is YESTERDAY, I missed it?
-        // Actually, if active day is yesterday and status is still 'active', it means I didn't finish it yesterday.
-        // So if activeDate < todayStr, FAIL.
-        
         if (activeDateStr < todayStr) {
              // FAIL LOGIC
-             // Mark current day as failed
              await db.update(days).set({ status: 'failed' }).where(eq(days.id, activeDay.id));
-             
-             // In 75 Hard, if you fail, you restart.
-             // We'll update state to show failure.
-             set({ currentDayId: activeDay.id }); // Show the failed day?
-             // Or maybe we need a global 'hasFailed' flag?
-             // For now, let's just let the UI reflect 'failed' status on the current day if we want.
-             // But the user needs to know they failed.
-             
-             const failedDay = { ...activeDay, status: 'failed' };
-             // We probably want to keep it as currentDayId so the UI shows "FAILED".
+             set({ currentDayId: activeDay.id }); 
         } else {
              set({ currentDayId: activeDay.id });
         }
-    } else {
-        // If no active day, maybe completed or failed?
-        // Find last modified?
-        // For now, default logic is fine.
     }
     
     await get().refreshToday();
