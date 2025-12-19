@@ -1,35 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { Save } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
 export const JournalScreen = () => {
+    const navigation = useNavigation();
     const { currentDayId, getJournal, saveJournal } = useChallengeStore();
     const [note, setNote] = useState('');
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+    const noteRef = React.useRef(note);
 
     const loadNote = React.useCallback(async () => {
         const savedNote = await getJournal();
-        if (savedNote) setNote(savedNote);
-        else setNote('');
+        if (savedNote) {
+            setNote(savedNote);
+            noteRef.current = savedNote;
+        } else {
+            setNote('');
+            noteRef.current = '';
+        }
     }, [getJournal]);
 
     useEffect(() => {
         loadNote();
     }, [currentDayId, loadNote]);
 
-    const handleSave = async () => {
-        await saveJournal(note);
-        Alert.alert("Saved", "Journal entry updated.");
-    };
+    // Auto-save logic
+    useEffect(() => {
+        if (note === noteRef.current) return; // No change
+        
+        setSaveStatus('saving');
+        const timer = setTimeout(async () => {
+            await saveJournal(note);
+            noteRef.current = note;
+            setSaveStatus('saved');
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [note, saveJournal]);
+
+    // Hardware Back Button & Cleanup
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('blur', () => {
+             if (note !== noteRef.current) {
+                 saveJournal(note);
+                 noteRef.current = note;
+             }
+        });
+        return unsubscribe;
+    }, [navigation, note, saveJournal]);
+
 
     return (
         <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={styles.container}
         >
             <View style={styles.header}>
-                <Text style={styles.title}>DAILY JOURNAL</Text>
-                <Text style={styles.subtitle}>Day {currentDayId}</Text>
+                <View>
+                    <Text style={styles.title}>DAILY JOURNAL</Text>
+                    <Text style={styles.subtitle}>Day {currentDayId}</Text>
+                </View>
+                <View style={styles.saveIndicator}>
+                    {saveStatus === 'saving' && <Text style={styles.saveStatusText}>Saving...</Text>}
+                    {saveStatus === 'saved' && <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}><Save color="#00C851" size={16} /><Text style={[styles.saveStatusText, {color: '#00C851'}]}>Saved</Text></View>}
+                </View>
             </View>
 
             <View style={styles.editorContainer}>
@@ -43,26 +79,17 @@ export const JournalScreen = () => {
                     textAlignVertical="top"
                 />
             </View>
-
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Save color="#000" size={24} />
-                <Text style={styles.saveText}>PROCEED TO SAVE</Text>
-            </TouchableOpacity>
         </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#000' },
-    header: { padding: 20, paddingTop: 60, backgroundColor: '#111' },
+    header: { padding: 20, paddingTop: 60, backgroundColor: '#111', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     title: { color: '#fff', fontSize: 24, fontWeight: '900', letterSpacing: 1 },
     subtitle: { color: '#888', marginTop: 5 },
+    saveIndicator: { justifyContent: 'center' },
+    saveStatusText: { color: '#888', fontSize: 14, fontWeight: '600' },
     editorContainer: { flex: 1, padding: 20 },
     input: { flex: 1, color: '#fff', fontSize: 18, lineHeight: 28 },
-    saveBtn: { 
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        backgroundColor: '#fff', margin: 20, padding: 15, borderRadius: 30,
-        gap: 10
-    },
-    saveText: { fontWeight: 'bold', fontSize: 16 }
 });
