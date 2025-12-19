@@ -68,5 +68,5 @@ const styles = StyleSheet.create({
     taskTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
     taskTextCompleted: { textDecorationLine: 'line-through' },
     taskSub: { color: '#666', fontSize: 10, marginTop: 4 },
-    thumb: { width: 40, height: 40, borderRadius: 8, marginTop: 5 }
+    thumb: { width: 60, height: 60, borderRadius: 8, marginTop: 5 }
 });
