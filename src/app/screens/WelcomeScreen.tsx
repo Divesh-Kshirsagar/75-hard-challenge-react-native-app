@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Dimensions, FlatList } from 'react-native';
 import { CheckCircle, Trophy, Flame } from 'lucide-react-native';
 import { useChallengeStore } from '../../store/challengeStore';
+import { WelcomeSlide } from '../components/WelcomeSlide';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const SLIDES = [
     {
@@ -45,20 +46,11 @@ export const WelcomeScreen = () => {
     };
 
     const renderItem = ({ item, index }: { item: typeof SLIDES[0], index: number }) => (
-        <View style={[styles.slide, { backgroundColor: item.bg }]}>
-            <View style={styles.iconContainer}>
-                {item.icon}
-            </View>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.subtitle}>{item.subtitle}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-            
-            {index === SLIDES.length - 1 && (
-                <TouchableOpacity style={styles.button} onPress={handleNext}>
-                    <Text style={styles.buttonText}>I'M READY</Text>
-                </TouchableOpacity>
-            )}
-        </View>
+        <WelcomeSlide 
+            item={item} 
+            isLast={index === SLIDES.length - 1} 
+            onNext={handleNext} 
+        />
     );
 
     return (
@@ -93,13 +85,6 @@ export const WelcomeScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#000' },
-    slide: { width, height, alignItems: 'center', justifyContent: 'center', padding: 40 },
-    iconContainer: { marginBottom: 40 },
-    title: { fontSize: 42, fontWeight: '900', color: '#fff', letterSpacing: 2, textAlign: 'center', marginBottom: 10 },
-    subtitle: { fontSize: 18, color: '#ff4444', marginBottom: 20, letterSpacing: 1, fontWeight: 'bold' },
-    description: { fontSize: 16, color: '#888', textAlign: 'center', lineHeight: 24, paddingHorizontal: 20 },
-    button: { marginTop: 60, backgroundColor: '#fff', paddingVertical: 15, paddingHorizontal: 50, borderRadius: 30 },
-    buttonText: { fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
     pagination: { position: 'absolute', bottom: 50, flexDirection: 'row', width: '100%', justifyContent: 'center' },
     dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#333', marginHorizontal: 5 },
     activeDot: { backgroundColor: '#fff', width: 20 }

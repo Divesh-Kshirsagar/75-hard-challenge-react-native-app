@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { AvatarSelector } from '../components/AvatarSelector';
-
-const { width } = Dimensions.get('window');
-const ITEM_SIZE = width / 3;
+import { ProfileStats } from '../components/ProfileStats';
+import { ProgressGallery } from '../components/ProgressGallery';
 
 export const ProfileScreen = () => {
     const { galleryImages, refreshGallery, daysPath, userProfile, setUserProfile } = useChallengeStore();
@@ -34,37 +33,14 @@ export const ProfileScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.statsRow}>
-                <View style={styles.statBox}>
-                    <Text style={styles.statNum}>{completedDays}</Text>
-                    <Text style={styles.statLabel}>Completed</Text>
-                </View>
-                 <View style={styles.statBox}>
-                    <Text style={styles.statNum}>{failedDays}</Text>
-                    <Text style={styles.statLabel}>Missed</Text>
-                </View>
-                 <View style={styles.statBox}>
-                    <Text style={styles.statNum}>{galleryImages.length}</Text>
-                    <Text style={styles.statLabel}>Photos</Text>
-                </View>
-            </View>
+            <ProfileStats 
+                completedDays={completedDays} 
+                failedDays={failedDays} 
+                totalPhotos={galleryImages.length} 
+            />
 
-            <Text style={styles.sectionTitle}>PROGRESS GALLERY ({galleryImages.length}/75)</Text>
-            
-            <View style={styles.gallery}>
-                {galleryImages.length === 0 ? (
-                    <Text style={styles.emptyText}>No photos yet. Capture your progress!</Text>
-                ) : (
-                    galleryImages.map((img: { id: number; uri: string; dayId: number }) => (
-                        <View key={img.id} style={styles.imageContainer}>
-                            <Image source={{ uri: img.uri }} style={styles.image} />
-                            <View style={styles.badge}>
-                                <Text style={styles.badgeText}>Day {img.dayId}</Text>
-                            </View>
-                        </View>
-                    ))
-                )}
-            </View>
+            <ProgressGallery images={galleryImages} />
+
              <View style={{ height: 100 }} /> 
 
              <AvatarSelector 
@@ -84,19 +60,6 @@ const styles = StyleSheet.create({
     avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 15, borderWidth: 2, borderColor: '#fff' },
     name: { color: '#fff', fontSize: 24, fontWeight: '900', letterSpacing: 1 },
     subtext: { color: '#888', marginTop: 5 },
-    
-    statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 40, paddingHorizontal: 20 },
-    statBox: { alignItems: 'center', backgroundColor: '#111', padding: 15, borderRadius: 12, minWidth: 100 },
-    statNum: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-    statLabel: { color: '#666', fontSize: 12, marginTop: 5, textTransform: 'uppercase' },
-
-    sectionTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginLeft: 20, marginBottom: 20 },
-    gallery: { flexDirection: 'row', flexWrap: 'wrap' },
-    imageContainer: { width: ITEM_SIZE, height: ITEM_SIZE, padding: 1 },
-    image: { width: '100%', height: '100%' },
-    badge: { position: 'absolute', bottom: 5, right: 5, backgroundColor: 'rgba(0,0,0,0.7)', padding: 4, borderRadius: 4 },
-    badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-    emptyText: { color: '#666', marginLeft: 20, fontStyle: 'italic' },
     editBadge: { marginTop: 15, paddingHorizontal: 15, paddingVertical: 8, backgroundColor: '#333', borderRadius: 20 },
     editText: { color: '#fff', fontSize: 10, fontWeight: 'bold' }
 });;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Play, Pause, RotateCcw } from 'lucide-react-native';
+import { PomodoroTimer } from '../components/PomodoroTimer';
 
 const FOCUS_TIME = 25 * 60;
 const BREAK_TIME = 5 * 60;
@@ -33,12 +34,6 @@ export const PomodoroScreen = () => {
         };
     }, [isActive]);
 
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    };
-
     const handleReset = () => {
         setIsActive(false);
         setTimeLeft(mode === 'FOCUS' ? FOCUS_TIME : BREAK_TIME);
@@ -57,10 +52,7 @@ export const PomodoroScreen = () => {
                 <Text style={styles.title}>FOCUS TIMER</Text>
             </View>
 
-            <View style={styles.timerCircle}>
-                <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
-                <Text style={styles.modeText}>{mode}</Text>
-            </View>
+            <PomodoroTimer timeLeft={timeLeft} mode={mode} />
 
             <View style={styles.controls}>
                 <TouchableOpacity onPress={() => setIsActive(!isActive)} style={styles.primaryBtn}>
@@ -84,15 +76,6 @@ const styles = StyleSheet.create({
     header: { position: 'absolute', top: 60 },
     title: { color: '#fff', fontSize: 24, fontWeight: '900', letterSpacing: 2 },
     
-    timerCircle: { 
-        width: 300, height: 300, borderRadius: 150, 
-        borderWidth: 4, borderColor: '#333',
-        justifyContent: 'center', alignItems: 'center',
-        marginBottom: 50
-    },
-    timerText: { fontSize: 80, fontWeight: 'bold', color: '#fff', fontVariant: ['tabular-nums'] },
-    modeText: { color: '#888', fontSize: 18, marginTop: 10, letterSpacing: 2 },
-
     controls: { flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 40 },
     primaryBtn: { 
         width: 80, height: 80, borderRadius: 40, backgroundColor: '#fff', 
