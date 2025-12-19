@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { AvatarSelector } from '../components/AvatarSelector';
 
@@ -12,22 +12,13 @@ export const ProfileScreen = () => {
 
     useEffect(() => {
         refreshGallery();
-    }, []);
+    }, [refreshGallery]);
 
     const completedDays = daysPath.filter(d => d.status === 'completed').length;
     const failedDays = daysPath.filter(d => d.status === 'failed').length;
 
     // Calculate Current Streak (naive: count backwards from today until not completed)
     // For MVP, just Total Completed is a good stat.
-
-    const renderImage = ({ item }: any) => ( // Fix type implicit any
-        <View style={styles.imageContainer}>
-             <Image source={{ uri: item.uri }} style={styles.image} />
-             <View style={styles.badge}>
-                 <Text style={styles.badgeText}>Day {item.dayId}</Text>
-             </View>
-        </View>
-    );
 
     return (
         <ScrollView style={styles.container}>

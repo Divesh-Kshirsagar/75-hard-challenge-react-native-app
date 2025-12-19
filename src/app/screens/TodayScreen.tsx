@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { CheckCircle, Circle, Dumbbell, Droplets, Book, Camera, Ban, Utensils } from 'lucide-react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import * as ImagePicker from 'expo-image-picker';
 import { InferSelectModel } from 'drizzle-orm';
@@ -83,7 +82,7 @@ export const TodayScreen = () => {
         }
     }, [isAllComplete]);
 
-    const handlePhoto = async (taskId: number) => {
+    const handlePhoto = React.useCallback(async (taskId: number) => {
         // ... (existing photo logic)
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
@@ -101,7 +100,7 @@ export const TodayScreen = () => {
         if (!result.canceled && result.assets[0].uri) {
             await completeTaskWithValue(taskId, result.assets[0].uri);
         }
-    };
+    }, [completeTaskWithValue]);
 
     const renderTaskItem = React.useCallback(({ item }: { item: Task }) => (
         <TaskItem 
@@ -109,7 +108,7 @@ export const TodayScreen = () => {
             onToggle={toggleTask} 
             onPhoto={handlePhoto} 
         />
-    ), [toggleTask]);
+    ), [toggleTask, handlePhoto]);
 
     if (isFailed) {
         return (

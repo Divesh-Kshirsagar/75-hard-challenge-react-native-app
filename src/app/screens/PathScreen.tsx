@@ -1,63 +1,41 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { Lock, Star, Check } from 'lucide-react-native';
 
-const { width } = Dimensions.get('window');
-const ITEM_SIZE = 80;
-
 export const PathScreen = () => {
-    const { daysPath, refreshPath } = useChallengeStore();
+    const { daysPath } = useChallengeStore();
 
-    useEffect(() => {
-        refreshPath();
-    }, []);
+    // Optimization: daysPath is kept in sync by the store actions. 
+    // Redundant fetching here causes stutter during navigation.
+    // If we really need to ensure freshness, use useFocusEffect or InteractionManager, 
+    // but the store logic seems sufficient.
 
-    // Create a Snake Layout
-    // 0 1 2
-    // 5 4 3
-    // 6 7 8
-    
-    const renderNode = (day, index) => {
+    const renderNode = ({ item, index }: { item: any, index: number }) => {
         // Calculate snake positioning
-        const row = Math.floor(index / 3);
-        const isReverseRow = row % 2 === 1;
-        const col = isReverseRow ? 2 - (index % 3) : (index % 3);
-        
-        // Simple Left/Center/Right alignment based on col
-        let alignSelf = 'center';
-        if (col === 0) alignSelf = 'flex-start';
-        if (col === 2) alignSelf = 'flex-end';
-        
-        // Add some padding to simulate the curve
-        const marginLeft = col * (width / 4); 
-        
-        // Simplified Logic:
-        // Just use a centered approach but offset them?
-        // Let's stick to a simpler zig-zag: Left, Center, Right, Center, Left...
-        
+        // Zig-Zag: Left, Center, Right, Center...
         const alignment = ['flex-start', 'center', 'flex-end', 'center'];
-        const alignPos = alignment[index % 4];
+        const alignPos = alignment[index % 4] as 'flex-start' | 'center' | 'flex-end'; // Type assertion
 
         // Styles
         let bgColor = '#333';
         let icon = <Lock color="#666" size={20} />;
         
-        if (day.status === 'completed') {
+        if (item.status === 'completed') {
             bgColor = '#00C851'; // Green
             icon = <Check color="#fff" size={24} />;
-        } else if (day.status === 'active') {
+        } else if (item.status === 'active') {
              bgColor = '#FF8800'; // Orange
              icon = <Star color="#fff" fill="#fff" size={24} />;
-        } else if (day.status === 'failed') {
+        } else if (item.status === 'failed') {
             bgColor = '#ff4444';
         }
 
         return (
-            <View key={day.id} style={[styles.nodeRow, { justifyContent: alignPos }]}>
+            <View style={[styles.nodeRow, { justifyContent: alignPos }]}>
                 <View style={[styles.node, { backgroundColor: bgColor }]}>
                     {icon}
-                    <Text style={styles.nodeText}>{day.id}</Text>
+                    <Text style={styles.nodeText}>{item.id}</Text>
                 </View>
             </View>
         );
@@ -68,11 +46,16 @@ export const PathScreen = () => {
              <View style={styles.header}>
                 <Text style={styles.headerTitle}>YOUR JOURNEY</Text>
             </View>
-            <ScrollView contentContainerStyle={styles.scroll}>
-                <View style={styles.pathContainer}>
-                     {daysPath.map((day, index) => renderNode(day, index))}
-                </View>
-            </ScrollView>
+            <FlatList 
+                data={daysPath}
+                renderItem={renderNode}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={styles.scroll}
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={5}
+                removeClippedSubviews={true}
+            />
         </View>
     );
 };

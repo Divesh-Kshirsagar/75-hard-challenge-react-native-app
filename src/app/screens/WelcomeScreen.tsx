@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, ImageBackground } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity } from 'react-native';
 import { CheckCircle, Trophy, Flame } from 'lucide-react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 
@@ -34,7 +33,6 @@ const SLIDES = [
 ];
 
 export const WelcomeScreen = () => {
-    const navigation = useNavigation<any>();
     const setHasSeenWelcome = useChallengeStore(state => state.setHasSeenWelcome);
     const [currentIndex, setCurrentIndex] = useState(0);
 

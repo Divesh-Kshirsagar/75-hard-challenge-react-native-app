@@ -6,22 +6,19 @@ import { Save } from 'lucide-react-native';
 export const JournalScreen = () => {
     const { currentDayId, getJournal, saveJournal } = useChallengeStore();
     const [note, setNote] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        loadNote();
-    }, [currentDayId]);
-
-    const loadNote = async () => {
+    const loadNote = React.useCallback(async () => {
         const savedNote = await getJournal();
         if (savedNote) setNote(savedNote);
         else setNote('');
-    };
+    }, [getJournal]);
+
+    useEffect(() => {
+        loadNote();
+    }, [currentDayId, loadNote]);
 
     const handleSave = async () => {
-        setIsLoading(true);
         await saveJournal(note);
-        setIsLoading(false);
         Alert.alert("Saved", "Journal entry updated.");
     };
 
