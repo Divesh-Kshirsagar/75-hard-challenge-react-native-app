@@ -3,19 +3,27 @@ import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { Lock, Star, Check } from 'lucide-react-native';
 
-export const PathScreen = () => {
-    const { daysPath } = useChallengeStore();
+import { Modal, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { X } from 'lucide-react-native';
 
-    // Optimization: daysPath is kept in sync by the store actions. 
-    // Redundant fetching here causes stutter during navigation.
-    // If we really need to ensure freshness, use useFocusEffect or InteractionManager, 
-    // but the store logic seems sufficient.
+export const PathScreen = () => {
+    const { daysPath, getDayDetails } = useChallengeStore();
+    const [selectedDay, setSelectedDay] = React.useState<number | null>(null);
+    const [dayDetails, setDayDetails] = React.useState<{tasks: any[], journal: string | null} | null>(null);
+    const [loading, setLoading] = React.useState(false);
+
+    const handleNodePress = async (dayId: number) => {
+        setSelectedDay(dayId);
+        setLoading(true);
+        const details = await getDayDetails(dayId);
+        setDayDetails(details);
+        setLoading(false);
+    };
 
     const renderNode = ({ item, index }: { item: any, index: number }) => {
         // Calculate snake positioning
-        // Zig-Zag: Left, Center, Right, Center...
         const alignment = ['flex-start', 'center', 'flex-end', 'center'];
-        const alignPos = alignment[index % 4] as 'flex-start' | 'center' | 'flex-end'; // Type assertion
+        const alignPos = alignment[index % 4] as 'flex-start' | 'center' | 'flex-end'; 
 
         // Styles
         let bgColor = '#333';
@@ -33,10 +41,13 @@ export const PathScreen = () => {
 
         return (
             <View style={[styles.nodeRow, { justifyContent: alignPos }]}>
-                <View style={[styles.node, { backgroundColor: bgColor }]}>
+                <TouchableOpacity 
+                    style={[styles.node, { backgroundColor: bgColor }]}
+                    onPress={() => handleNodePress(item.id)}
+                >
                     {icon}
                     <Text style={styles.nodeText}>{item.id}</Text>
-                </View>
+                </TouchableOpacity>
             </View>
         );
     };
@@ -52,10 +63,61 @@ export const PathScreen = () => {
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={styles.scroll}
                 initialNumToRender={10}
-                maxToRenderPerBatch={10}
-                windowSize={5}
-                removeClippedSubviews={true}
             />
+
+            {/* Day Detail Modal */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={!!selectedDay}
+                onRequestClose={() => setSelectedDay(null)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Day {selectedDay}</Text>
+                            <TouchableOpacity onPress={() => setSelectedDay(null)}>
+                                <X color="#fff" size={24} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#fff" />
+                        ) : dayDetails ? (
+                            <ScrollView>
+                                <Text style={styles.sectionHeader}>TASKS</Text>
+                                {dayDetails.tasks.map((task, idx) => {
+                                    const isImage = task.value && task.value.toString().startsWith('file://');
+                                    return (
+                                        <View key={idx} style={styles.detailRow}>
+                                            {task.completed ? <Check color="#00C851" size={16} /> : <View style={{ width: 16 }} />}
+                                            {isImage ? (
+                                                <Image 
+                                                    source={{ uri: task.value }} 
+                                                    style={{ width: 100, height: 100, borderRadius: 8, marginLeft: 10, marginTop: 5 }} 
+                                                />
+                                            ) : (
+                                                <Text style={[styles.detailText, task.completed && { color: '#888', textDecorationLine: 'line-through' }]}>
+                                                    {task.value}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    );
+                                })}
+
+                                {dayDetails.journal && (
+                                    <>
+                                        <Text style={styles.sectionHeader}>JOURNAL</Text>
+                                        <Text style={styles.journalText}>{dayDetails.journal}</Text>
+                                    </>
+                                )}
+                            </ScrollView>
+                        ) : (
+                            <Text style={{ color: '#fff' }}>No Data</Text>
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -72,5 +134,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center', alignItems: 'center',
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5
     },
-    nodeText: { color: '#fff', fontWeight: 'bold', fontSize: 16, marginTop: 4 }
+    nodeText: { color: '#fff', fontWeight: 'bold', fontSize: 16, marginTop: 4 },
+    
+    // Modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 20 },
+    modalContent: { backgroundColor: '#1E1E1E', borderRadius: 20, padding: 20, maxHeight: '70%' },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+    modalTitle: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+    sectionHeader: { color: '#888', fontSize: 12, fontWeight: 'bold', letterSpacing: 1, marginTop: 15, marginBottom: 10 },
+    detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+    detailText: { color: '#fff', fontSize: 16, marginLeft: 10 },
+    journalText: { color: '#ddd', fontStyle: 'italic', lineHeight: 22 }
 });

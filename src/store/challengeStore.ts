@@ -36,6 +36,10 @@ interface ChallengeState {
   refreshGallery: () => Promise<void>;
   getJournal: () => Promise<string | null>;
   saveJournal: (note: string) => Promise<void>;
+  
+  // New features
+  getDayDetails: (dayId: number) => Promise<{ tasks: any[], journal: string | null }>;
+  checkChallengeCompletion: () => boolean; // Helper to check if 75 days are done
 }
 
 export const useChallengeStore = create<ChallengeState>((set, get) => ({
@@ -338,5 +342,25 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
           // Rollback could go here
           get().refreshToday();
       }
+  },
+
+  getDayDetails: async (dayId: number) => {
+      // Fetch tasks for specific day
+      const dayTasks = await db.query.tasks.findMany({
+          where: eq(tasks.dayId, dayId)
+      });
+      const day = await db.query.days.findFirst({
+        where: eq(days.id, dayId)
+      });
+      return { 
+          tasks: dayTasks, 
+          journal: day?.notes || null 
+      };
+  },
+
+  checkChallengeCompletion: () => {
+      const { daysPath } = get();
+      const completedDays = daysPath.filter(d => d.status === 'completed').length;
+      return completedDays === 75;
   }
 }));

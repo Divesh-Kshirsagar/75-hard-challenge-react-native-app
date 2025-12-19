@@ -156,7 +156,7 @@ export const TodayScreen = () => {
             
             {isAllComplete && (
                 <ConfettiCannon 
-                    count={200} 
+                    count={50} 
                     origin={{x: -10, y: 0}} 
                     autoStart={false} 
                     ref={confettiRef} 
