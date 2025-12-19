@@ -1,11 +1,13 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -26,10 +28,11 @@ export const scheduleDailyReminder = async () => {
       body: "Don't forget your tasks for today! Stay hard.",
     },
     trigger: {
+      type: 'calendar',
       hour: 9,
       minute: 0,
       repeats: true,
-    },
+    } as any, // Cast to any to avoid strict TS issues with triggers
   });
 };
 
