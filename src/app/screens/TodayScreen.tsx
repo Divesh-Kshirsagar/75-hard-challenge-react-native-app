@@ -11,12 +11,16 @@ import { tasks } from '../../db/schema';
 
 type Task = InferSelectModel<typeof tasks>;
 
+import { useNavigation } from '@react-navigation/native';
+
 export const TodayScreen = () => {
+    const navigation = useNavigation<any>();
     const { todayTasks, customTodos, toggleTask, completeTaskWithValue, currentDayId, restartChallenge, daysPath } = useChallengeStore();
     
     // Day Status Logic
     const currentDay = daysPath.find(d => d.id === currentDayId);
     const isFailed = currentDay?.status === 'failed';
+    // const isFailed = true;
     const isAllComplete = todayTasks.length > 0 && todayTasks.every(t => !!t.completed);
 
     // Initialize Notifications
@@ -109,7 +113,7 @@ export const TodayScreen = () => {
                     </Text>
                     
                     <TouchableOpacity 
-                        style={{ backgroundColor: '#ff4444', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 30 }}
+                        style={{ backgroundColor: '#ff4444', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 30, marginBottom: 15, width: '80%', alignItems: 'center' }}
                         onPress={() => {
                             Alert.alert("Restart Challenge?", "This will wipe current progress and start Day 1.", [
                                 { text: "Cancel", style: "cancel" },
@@ -118,6 +122,13 @@ export const TodayScreen = () => {
                         }}
                     >
                         <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>RESTART CHALLENGE</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={{ paddingVertical: 15, paddingHorizontal: 30, borderRadius: 30, borderWidth: 1, borderColor: '#666', width: '80%', alignItems: 'center' }}
+                        onPress={() => navigation.navigate('Path')}
+                    >
+                        <Text style={{ color: '#ccc', fontWeight: 'bold', fontSize: 14 }}>VIEW HISTORY</Text>
                     </TouchableOpacity>
                 </View>
             )}
