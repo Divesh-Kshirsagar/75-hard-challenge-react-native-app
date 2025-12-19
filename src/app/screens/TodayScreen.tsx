@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Modal, Image } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
+import { scheduleNotifications } from '../utils/notifications';
 import { CustomTodoSection } from '../components/CustomTodoSection';
 import { TaskItem } from '../components/TaskItem';
 import ConfettiCannon from 'react-native-confetti-cannon';
@@ -17,6 +18,11 @@ export const TodayScreen = () => {
     const currentDay = daysPath.find(d => d.id === currentDayId);
     const isFailed = currentDay?.status === 'failed';
     const isAllComplete = todayTasks.length > 0 && todayTasks.every(t => !!t.completed);
+
+    // Initialize Notifications
+    React.useEffect(() => {
+        scheduleNotifications();
+    }, []);
 
     const [viewingPhoto, setViewingPhoto] = React.useState<string | null>(null);
     const [activePhotoTaskId, setActivePhotoTaskId] = React.useState<number | null>(null);

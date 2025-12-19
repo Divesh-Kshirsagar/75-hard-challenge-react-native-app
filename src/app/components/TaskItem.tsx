@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image, Platform } from 'react-native';
 import { CheckCircle, Circle, Dumbbell, Droplets, Book, Camera, Ban, Utensils } from 'lucide-react-native';
 import { InferSelectModel } from 'drizzle-orm';
 import { tasks } from '../../db/schema';
@@ -42,7 +42,15 @@ export const TaskItem = ({ task, onToggle, onPhoto }: TaskItemProps) => {
     };
 
     return (
-        <TouchableOpacity style={[styles.taskCard, completed && styles.taskCardCompleted]} onPress={handlePress}>
+        <Pressable 
+            style={({ pressed }) => [
+                styles.taskCard, 
+                completed && styles.taskCardCompleted,
+                pressed && Platform.OS === 'ios' && { opacity: 0.7 }
+            ]} 
+            onPress={handlePress}
+            android_ripple={{ color: 'rgba(255,255,255,0.1)' }}
+        >
             <View style={styles.iconContainer}>
                 {getIcon(task.type, completed ? '#fff' : '#ff4444')}
             </View>
@@ -57,7 +65,7 @@ export const TaskItem = ({ task, onToggle, onPhoto }: TaskItemProps) => {
             <View>
                 {completed ? <CheckCircle color="#fff" size={28} /> : <Circle color="#333" size={28} />}
             </View>
-        </TouchableOpacity>
+        </Pressable>
     );
 };
 
