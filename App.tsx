@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useChallengeStore } from './src/store/challengeStore';
@@ -21,6 +21,14 @@ Notifications.setNotificationHandler({
 });
 
 const Stack = createNativeStackNavigator();
+
+const MyDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: '#000',
+  },
+};
 
 export default function App() {
   const { initApp, isInitialized, currentDayId, hasSeenWelcome } = useChallengeStore();
@@ -83,7 +91,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
-      <NavigationContainer>
+      <NavigationContainer theme={MyDarkTheme}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {!hasSeenWelcome && (
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
