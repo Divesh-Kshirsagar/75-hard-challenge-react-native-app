@@ -3,7 +3,6 @@ import { Alert } from 'react-native';
 // Mock Ad Service
 // In a real app, this would wrap AdMob / Google Mobile Ads
 
-const INTERSTITIAL_CAP_KEY = 'last_interstitial_ts';
 // Cap: Once every 3 days? Or just a simple check for now since we can't persist easily without AsyncStorage.
 // "frequency capped to maybe once every 3 days"
 // For prototype: Let's just use a simple mock that always succeeds or has a simple counter.

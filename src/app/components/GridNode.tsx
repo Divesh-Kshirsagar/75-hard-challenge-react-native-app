@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Check, X, Lock } from 'lucide-react-native';
+import { Lock } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 const GAP = 5;

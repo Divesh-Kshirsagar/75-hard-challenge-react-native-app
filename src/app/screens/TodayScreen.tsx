@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Modal, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { scheduleNotifications } from '../utils/notifications';
 import { CustomTodoSection } from '../components/CustomTodoSection';
@@ -10,8 +11,6 @@ import { InferSelectModel } from 'drizzle-orm';
 import { tasks } from '../../db/schema';
 
 type Task = InferSelectModel<typeof tasks>;
-
-import { useNavigation } from '@react-navigation/native';
 
 export const TodayScreen = () => {
     const navigation = useNavigation<any>();
@@ -31,19 +30,7 @@ export const TodayScreen = () => {
     const [viewingPhoto, setViewingPhoto] = React.useState<string | null>(null);
     const [activePhotoTaskId, setActivePhotoTaskId] = React.useState<number | null>(null);
 
-    const handlePhoto = React.useCallback(async (taskId: number) => {
-        const task = todayTasks.find(t => t.id === taskId);
-        // Check if photo exists in task value
-        if (task?.value && task.value.startsWith('file://')) {
-            setViewingPhoto(task.value);
-            setActivePhotoTaskId(taskId);
-            return;
-        }
-
-        takePhoto(taskId);
-    }, [todayTasks]);
-
-    const takePhoto = async (taskId: number) => {
+    const takePhoto = React.useCallback(async (taskId: number) => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
              Alert.alert("Permission needed", "Camera access is required for progress pics!");
@@ -60,7 +47,19 @@ export const TodayScreen = () => {
         if (!result.canceled && result.assets[0].uri) {
             await completeTaskWithValue(taskId, result.assets[0].uri);
         }
-    };
+    }, [completeTaskWithValue]);
+
+    const handlePhoto = React.useCallback(async (taskId: number) => {
+        const task = todayTasks.find(t => t.id === taskId);
+        // Check if photo exists in task value
+        if (task?.value && task.value.startsWith('file://')) {
+            setViewingPhoto(task.value);
+            setActivePhotoTaskId(taskId);
+            return;
+        }
+
+        takePhoto(taskId);
+    }, [todayTasks, takePhoto]);
 
     const renderTaskItem = React.useCallback(({ item }: { item: Task }) => (
         <TaskItem 
