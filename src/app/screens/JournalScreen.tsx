@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
-import { Save } from 'lucide-react-native';
+import { Save, CheckCircle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { AdService } from '../utils/AdService';
 
 export const JournalScreen = () => {
     const navigation = useNavigation();
@@ -62,9 +63,20 @@ export const JournalScreen = () => {
                     <Text style={styles.title}>DAILY JOURNAL</Text>
                     <Text style={styles.subtitle}>Day {currentDayId}</Text>
                 </View>
-                <View style={styles.saveIndicator}>
-                    {saveStatus === 'saving' && <Text style={styles.saveStatusText}>Saving...</Text>}
-                    {saveStatus === 'saved' && <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}><Save color="#00C851" size={16} /><Text style={[styles.saveStatusText, {color: '#00C851'}]}>Saved</Text></View>}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+                    <View style={styles.saveIndicator}>
+                        {saveStatus === 'saving' && <Text style={styles.saveStatusText}>Saving...</Text>}
+                        {saveStatus === 'saved' && <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}><Save color="#00C851" size={16} /><Text style={[styles.saveStatusText, {color: '#00C851'}]}>Saved</Text></View>}
+                    </View>
+                    <TouchableOpacity 
+                        onPress={async () => {
+                            await AdService.showInterstitial();
+                            navigation.goBack();
+                        }}
+                        style={{ padding: 5 }}
+                    >
+                        <CheckCircle color="#fff" size={24} />
+                    </TouchableOpacity>
                 </View>
             </View>
 

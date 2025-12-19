@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Play, Pause, RotateCcw } from 'lucide-react-native';
 import { PomodoroTimer } from '../components/PomodoroTimer';
+import { BannerAd } from '../components/ads/BannerAd';
 
 const FOCUS_TIME = 25 * 60;
 const BREAK_TIME = 5 * 60;
@@ -67,6 +68,10 @@ export const PomodoroScreen = () => {
             <TouchableOpacity onPress={toggleMode} style={styles.modeBtn}>
                  <Text style={styles.modeBtnText}>SWITCH TO {mode === 'FOCUS' ? 'BREAK' : 'FOCUS'}</Text>
             </TouchableOpacity>
+
+            <View style={{ position: 'absolute', bottom: 20 }}>
+                <BannerAd />
+            </View>
         </View>
     );
 };
