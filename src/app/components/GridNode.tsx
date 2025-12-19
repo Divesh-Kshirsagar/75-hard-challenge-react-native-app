@@ -39,22 +39,29 @@ export const GridNode = ({ day, isToday, onPress }: GridNodeProps) => {
         if (isActive) bgColor = '#333';
     }
 
-    return (
+return (
         <TouchableOpacity 
-            style={[styles.node, { backgroundColor: bgColor, borderColor, borderWidth }]}
+            // 1. SHARPER CORNERS: Reduced borderRadius from 8 to 4
+            style={[styles.node, { backgroundColor: bgColor, borderColor, borderWidth, borderRadius: 4 }]} 
             onPress={() => onPress(day.id)}
-            disabled={isLocked} // Prevent clicking future days
+            disabled={isLocked}
         >
-            <Text style={[styles.dayText, (isCompleted || isFailed) && { color: '#fff', fontWeight: 'bold' }]}>
+            {/* 2. CLEANER TEXT: No overlapping icons for Completed/Failed. 
+                The color tells the story. */}
+            <Text style={[
+                styles.dayText, 
+                (isCompleted || isFailed) && { color: '#fff', fontWeight: '900', fontSize: 14 }
+            ]}>
                 {day.id}
             </Text>
             
-            {/* Overlay Icons */}
-            <View style={styles.iconOverlay}>
-                {isCompleted && <Check color="rgba(255,255,255,0.5)" size={20} />}
-                {isFailed && <X color="rgba(255,255,255,0.5)" size={20} />}
-                {isLocked && <Lock color="#222" size={12} />}
-            </View>
+            {/* 3. SUBTLETY: Only show Lock icon for future days (faintly) */}
+            {isLocked && (
+                <View style={styles.iconOverlay}>
+                     <Lock color="#333" size={12} />
+                </View>
+            )}
+            {/* Remove the Check/X icons entirely to reduce noise */}
         </TouchableOpacity>
     );
 };
