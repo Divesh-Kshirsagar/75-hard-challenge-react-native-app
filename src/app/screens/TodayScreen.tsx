@@ -136,8 +136,8 @@ export const TodayScreen = () => {
     return (
         <KeyboardAvoidingView 
             style={styles.container} 
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} 
         >
             <View style={styles.header}>
                 <Text style={styles.dayTitle}>DAY {currentDayId}</Text>
@@ -148,7 +148,7 @@ export const TodayScreen = () => {
                 data={todayTasks}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderTaskItem}
-                contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+                contentContainerStyle={{ padding: 20, paddingBottom: 150 }}
                 ListFooterComponent={() => <CustomTodoSection customTodos={customTodos} />}
                 keyboardShouldPersistTaps="handled"
                 removeClippedSubviews={false}
