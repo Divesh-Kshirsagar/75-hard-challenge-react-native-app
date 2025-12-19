@@ -155,28 +155,37 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
   },
 
   toggleTask: async (taskId, currentStatus) => {
-      const { currentDayId } = get();
+      const { currentDayId, todayTasks } = get();
       if (!currentDayId) return;
-
-      // 1. Update Task
-      await db.update(tasks).set({ completed: !currentStatus }).where(eq(tasks.id, taskId));
       
-      // 2. Refresh Local State
-      await get().refreshToday();
+      const newStatus = !currentStatus;
 
-      // 3. Check for Day Completion
-      const freshTasks = await db.query.tasks.findMany({
-          where: eq(tasks.dayId, currentDayId)
-      });
+      // 1. Optimistic Update
+      const optimizedTasks = todayTasks.map(t => 
+          t.id === taskId ? { ...t, completed: newStatus } : t
+      );
+      set({ todayTasks: optimizedTasks });
 
-      const allComplete = freshTasks.every(t => t.completed);
-      const dayStatus = allComplete ? 'completed' : 'active';
+      try {
+          // 2. DB Update in Background
+          await db.update(tasks).set({ completed: newStatus }).where(eq(tasks.id, taskId));
+          
+          // 3. Check Day Completion
+          // Use in-memory data
+          const allComplete = optimizedTasks.every(t => t.completed);
+          const dayStatus = allComplete ? 'completed' : 'active';
 
-      // 4. Update Day Status
-      await db.update(days).set({ status: dayStatus }).where(eq(days.id, currentDayId));
-      
-      // 5. Refresh Path
-      await get().refreshPath();
+          if (allComplete || (currentStatus && !newStatus)) { 
+               // If we just completed all, OR we un-completed one (might lose 'completed' status), update day
+               // Wait, if we uncheck one, we might go from completed -> active.
+               await db.update(days).set({ status: dayStatus }).where(eq(days.id, currentDayId));
+               get().refreshPath();
+          }
+
+      } catch (error) {
+          console.error("Failed to toggle task", error);
+          get().refreshToday();
+      }
   },
 
   getJournal: async () => {
@@ -210,24 +219,43 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
   },
 
   completeTaskWithValue: async (taskId, value) => {
-      const { currentDayId } = get();
+      const { currentDayId, todayTasks } = get();
       if (!currentDayId) return;
 
-      // 1. Update Task with Value and Mark Complete
-      await db.update(tasks).set({ 
-          completed: true,
-          value: value 
-      }).where(eq(tasks.id, taskId));
-      
-      // 2. Refresh Local State
-      await get().refreshToday();
+      // 1. Optimistic Update (Immediate UI Feedback)
+      const optimizedTasks = todayTasks.map(t => 
+          t.id === taskId ? { ...t, completed: true, value: value } : t
+      );
+      set({ todayTasks: optimizedTasks });
 
-      // Check for Day Completion
-      const freshTasks = await db.query.tasks.findMany({ where: eq(tasks.dayId, currentDayId) });
-      const allComplete = freshTasks.every(t => t.completed);
-      const dayStatus = allComplete ? 'completed' : 'active';
-      await db.update(days).set({ status: dayStatus }).where(eq(days.id, currentDayId));
-      await get().refreshPath();
-      await get().refreshGallery();
+      // 2. Perform DB Updates in Background
+      // We don't await these for the UI to respond, but we should handle errors ideally.
+      // For now, we trust the DB write succeeds.
+      try {
+          // Update Task
+          await db.update(tasks).set({ 
+              completed: true,
+              value: value 
+          }).where(eq(tasks.id, taskId));
+
+          // Check Day Completion
+          // Use the in-memory optimizedTasks for speed
+          const allComplete = optimizedTasks.every(t => t.completed);
+          const dayStatus = allComplete ? 'completed' : 'active';
+          
+          if (allComplete) {
+               await db.update(days).set({ status: dayStatus }).where(eq(days.id, currentDayId));
+               // Only refresh path if day status changed
+               get().refreshPath();
+          }
+          
+          // Refresh Gallery in background
+          get().refreshGallery();
+          
+      } catch (error) {
+          console.error("Failed to save task", error);
+          // Rollback could go here
+          get().refreshToday();
+      }
   }
 }));

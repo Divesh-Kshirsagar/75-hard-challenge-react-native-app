@@ -94,7 +94,7 @@ export const TodayScreen = () => {
             mediaTypes: ['images'], 
             allowsEditing: true,
             aspect: [3, 4],
-            quality: 0.5,
+            quality: 0.3,
         });
 
         if (!result.canceled && result.assets[0].uri) {
