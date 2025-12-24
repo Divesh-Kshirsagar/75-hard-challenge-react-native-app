@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ImageBackground } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,8 +31,13 @@ export const WelcomeSlide = ({ item, isLast, onNext }: WelcomeSlideProps) => {
                 <Text style={styles.description}>{item.description}</Text>
                 
                 {isLast && (
-                    <TouchableOpacity style={styles.button} onPress={onNext}>
-                        <Text style={styles.buttonText}>I'M READY</Text>
+                    <TouchableOpacity style={styles.buttonContainer} onPress={onNext} activeOpacity={0.8}>
+                        <LinearGradient
+                            colors={['#636363', '#000000']}
+                            style={styles.button}
+                        >
+                            <Text style={styles.buttonText}>ACCEPT CHALLENGE</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 )}
             </View>
@@ -64,6 +70,28 @@ const styles = StyleSheet.create({
     title: { fontSize: 42, fontWeight: '900', color: '#fff', letterSpacing: 2, textAlign: 'center', marginBottom: 10 },
     subtitle: { fontSize: 18, color: '#ff4444', marginBottom: 20, letterSpacing: 1, fontWeight: 'bold' },
     description: { fontSize: 16, color: '#ddd', textAlign: 'center', lineHeight: 24, paddingHorizontal: 20 },
-    button: { marginTop: 60, backgroundColor: '#fff', paddingVertical: 15, paddingHorizontal: 50, borderRadius: 30 },
-    buttonText: { fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
+    buttonContainer: { 
+        marginTop: 36,
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: '#ff3d00',
+        shadowColor: '#ff0000',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    button: { 
+        paddingVertical: 20, 
+        paddingHorizontal: 120, 
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonText: { 
+        fontSize: 14, 
+        fontWeight: '600', 
+        letterSpacing: 0.1, 
+        color: '#fff',
+    },
 });
