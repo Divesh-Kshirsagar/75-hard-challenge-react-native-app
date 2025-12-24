@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useChallengeStore } from './src/store/challengeStore';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { OnboardingScreen } from './src/app/screens/OnboardingScreen';
 import { WelcomeScreen } from './src/app/screens/WelcomeScreen';
 import { MainNavigator } from './src/app/MainNavigator';
 import * as Notifications from 'expo-notifications';
@@ -96,10 +95,7 @@ export default function App() {
           {!hasSeenWelcome && (
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
           )}
-          {!currentDayId && (
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-          )}
-          {currentDayId && (
+          {hasSeenWelcome && (
             <Stack.Screen name="Main" component={MainNavigator} />
           )}
         </Stack.Navigator>

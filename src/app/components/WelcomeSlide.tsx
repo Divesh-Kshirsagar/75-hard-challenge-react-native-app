@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
@@ -14,9 +14,10 @@ interface WelcomeSlideProps {
     };
     isLast: boolean;
     onNext: () => void;
+    loading?: boolean;
 }
 
-export const WelcomeSlide = ({ item, isLast, onNext }: WelcomeSlideProps) => {
+export const WelcomeSlide = ({ item, isLast, onNext, loading = false }: WelcomeSlideProps) => {
     return (
         <ImageBackground 
             source={item.image} 
@@ -31,12 +32,16 @@ export const WelcomeSlide = ({ item, isLast, onNext }: WelcomeSlideProps) => {
                 <Text style={styles.description}>{item.description}</Text>
                 
                 {isLast && (
-                    <TouchableOpacity style={styles.buttonContainer} onPress={onNext} activeOpacity={0.8}>
+                    <TouchableOpacity style={styles.buttonContainer} onPress={onNext} activeOpacity={0.8} disabled={loading}>
                         <LinearGradient
                             colors={['#636363', '#000000']}
                             style={styles.button}
                         >
-                            <Text style={styles.buttonText}>ACCEPT CHALLENGE</Text>
+                            {loading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.buttonText}>ACCEPT CHALLENGE</Text>
+                            )}
                         </LinearGradient>
                     </TouchableOpacity>
                 )}

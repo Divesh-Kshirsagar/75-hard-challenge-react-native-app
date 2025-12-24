@@ -32,14 +32,20 @@ const SLIDES = [
 ];
 
 export const WelcomeScreen = () => {
-    const setHasSeenWelcome = useChallengeStore(state => state.setHasSeenWelcome);
+    const { setHasSeenWelcome, startChallenge } = useChallengeStore();
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [loading, setLoading] = useState(false);
 
     const handleNext = async () => {
         if (currentIndex < SLIDES.length - 1) {
              // Let user swipe manually or implement ref to scroll
         } else {
+            setLoading(true);
+            // Start from TODAY
+            await startChallenge(new Date().toISOString());
+            // Store will update currentDayId, triggering App to switch views
             await setHasSeenWelcome();
+            setLoading(false);
         }
     };
 
@@ -47,7 +53,8 @@ export const WelcomeScreen = () => {
         <WelcomeSlide 
             item={item} 
             isLast={index === SLIDES.length - 1} 
-            onNext={handleNext} 
+            onNext={handleNext}
+            loading={loading}
         />
     );
 
