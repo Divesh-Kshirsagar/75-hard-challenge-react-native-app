@@ -1,35 +1,33 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions, FlatList } from 'react-native';
-import { CheckCircle, Trophy, Flame } from 'lucide-react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { WelcomeSlide } from '../components/WelcomeSlide';
 
 const { width } = Dimensions.get('window');
 
+// TODO: Replace these placeholders with actual images from assets folder
+// Example: require('../../assets/welcome-1.jpg')
 const SLIDES = [
     {
         id: '1',
         title: '75 HARD',
         subtitle: 'The Mental Toughness Challenge',
         description: 'This is not a fitness program. It is a transformative mental toughness program.',
-        icon: <Flame color="#fff" size={80} />,
-        bg: '#000'
+        image: require('../../../assets/torch.webp')
     },
     {
         id: '2',
         title: 'THE RULES',
         subtitle: 'Zero Compromises',
         description: 'Two workouts. One gallon of water. Read 10 pages. Follow a diet. No alcohol. Take a progress pic. Every single day.',
-        icon: <CheckCircle color="#fff" size={80} />,
-        bg: '#111'
+        image: require('../../../assets/dumbell.webp')
     },
     {
         id: '3',
         title: 'NO EXCUSES',
         subtitle: 'Restart if you fail',
         description: 'If you miss a single task, you start over from Day 1. Are you ready to change your life?',
-        icon: <Trophy color="#fff" size={80} />,
-        bg: '#000'
+        image: require('../../../assets/excuses.webp')
     }
 ];
 
