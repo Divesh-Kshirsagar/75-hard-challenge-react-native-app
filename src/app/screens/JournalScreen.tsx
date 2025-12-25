@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform, TouchableOpacity, ImageBackground } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { Save, CheckCircle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -54,14 +54,19 @@ export const JournalScreen = () => {
 
 
     return (
+        <ImageBackground 
+            source={require('../../../assets/journal.webp')} 
+            style={styles.container}
+            resizeMode="cover"
+        >
         <KeyboardAvoidingView 
             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={styles.container}
+            style={styles.glassContainer}
         >
             <View style={styles.header}>
                 <View>
                     <Text style={styles.title}>DAILY JOURNAL</Text>
-                    <Text style={styles.subtitle}>Day {currentDayId}</Text>
+                    <Text style={styles.subtitle}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
                     <View style={styles.saveIndicator}>
@@ -92,12 +97,14 @@ export const JournalScreen = () => {
                 />
             </View>
         </KeyboardAvoidingView>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#000' },
-    header: { padding: 20, paddingTop: 60, backgroundColor: '#111', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    container: { flex: 1 },
+    glassContainer: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.82)' },
+    header: { padding: 20, paddingTop: 60, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     title: { color: '#fff', fontSize: 24, fontWeight: '900', letterSpacing: 1 },
     subtitle: { color: '#888', marginTop: 5 },
     saveIndicator: { justifyContent: 'center' },
