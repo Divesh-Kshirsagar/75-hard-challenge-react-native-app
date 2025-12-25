@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ImageBackground } from 'react-native';
 import { useChallengeStore } from '../../store/challengeStore';
 import { GridNode } from '../components/GridNode'; // Import updated component
 import { DayDetailModal } from '../components/DayDetailModal';
@@ -29,8 +29,13 @@ export const PathScreen = () => {
     );
 
     return (
-        <View style={styles.container}>
-             <View style={styles.header}>
+        <ImageBackground 
+            source={require('../../../assets/path.webp')} 
+            style={styles.container}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay} />
+            <View style={styles.header}>
                 <Text style={styles.headerTitle}>YOUR JOURNEY</Text>
             </View>
             <FlatList 
@@ -58,13 +63,17 @@ export const PathScreen = () => {
                 imageUri={fullScreenImage}
                 onClose={() => setFullScreenImage(null)}
             />
-        </View>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#111' },
-    header: { padding: 20, paddingTop: 60, backgroundColor: '#000', alignItems: 'center' },
+    container: { flex: 1 },
+    overlay: { 
+        ...StyleSheet.absoluteFillObject, 
+        backgroundColor: 'rgba(0, 0, 0, 0.5)' 
+    },
+    header: { padding: 20, paddingTop: 60, alignItems: 'center' },
     headerTitle: { color: '#fff', fontWeight: 'bold', fontSize: 20, letterSpacing: 2 },
     // Ensure padding matches the calculation in GridNode (20)
     scroll: { padding: 20, paddingBottom: 100 },
