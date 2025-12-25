@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { Play, Pause, RotateCcw } from 'lucide-react-native';
 import { PomodoroTimer } from '../components/PomodoroTimer';
 import { BannerAd } from '../components/ads/BannerAd';
@@ -48,7 +48,11 @@ export const PomodoroScreen = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <ImageBackground 
+            source={require('../../../assets/torch.webp')} 
+            style={styles.container}
+            resizeMode="cover"
+        >
             <View style={styles.header}>
                 <Text style={styles.title}>FOCUS TIMER</Text>
             </View>
@@ -72,12 +76,12 @@ export const PomodoroScreen = () => {
             <View style={{ position: 'absolute', bottom: 20 }}>
                 <BannerAd />
             </View>
-        </View>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
+    container: { flex: 1, alignItems: 'center', justifyContent: 'center', opacity: 0.7 },
     header: { position: 'absolute', top: 60 },
     title: { color: '#fff', fontSize: 24, fontWeight: '900', letterSpacing: 2 },
     
